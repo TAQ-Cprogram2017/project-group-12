@@ -5,18 +5,17 @@
 #include <time.h>
 #pragma comment(lib, "winmm.lib")
 
+#define high 20 
+#define width 50// 游戏画面大小
 
-// 全局变量
+
 void SetColor(int a=1,int c=10)
 {
 	HANDLE b=GetStdHandle(STD_OUTPUT_HANDLE);
 	SetConsoleTextAttribute(b,c) ;
 	
 }
-int high,width; // 游戏画面大小
-int bird_x,bird_y; // 小鸟的坐标
-int bar1_y,bar1_xDown,bar1_xTop; // 障碍物
-int score=0;
+
 
 void gotoxy(int x,int y)//类似于清屏函数
 {
@@ -27,23 +26,22 @@ void gotoxy(int x,int y)//类似于清屏函数
     SetConsoleCursorPosition(handle,pos);
 }
 
-int startup()  // 数据初始化 
+int startup(int*bird_x,int*bird_y,int*bar1_y,int*bar1_xDown,int*bar1_xTop,int*score)  // 数据初始化 
 {
 	int i;
-	high = 20;
-	width = 50;
-	bird_x = high/2;
-	bird_y = 10;
-	bar1_y = 50;
-	bar1_xDown =high/2-3;
-	bar1_xTop= high/2+3;
+	*bird_x = high/2;
+	*bird_y = 10;
+	*bar1_y = 50;
+	*bar1_xDown =high/2-3;
+	*bar1_xTop= high/2+3;
+	*score = 0;
 	i=rand()%10;
 	return i;
 }
-int barshow(int q,int i)
+int barshow(int q,int i,int*bird_x, int*bird_y, int *score)
 {
 	Sleep(75);
-	int a,f;
+	int a,f,w=0;
 		if(q>=0)
 	    {
 	       f=i;
@@ -82,66 +80,83 @@ int barshow(int q,int i)
 	        gotoxy(0,a); 
 	        printf(" ");
 	       }
-	               if(bird_y==(q+1))
+	               if(*bird_y==(q+1))
 	       {
-	       	    if((bird_x>i)&&(bird_x<(i+6)))
-	       	         score++;
+	       	    if((*bird_x>i)&&(*bird_x<(i+6)))
+	       	         (*score)++;
 	       	    else
 	       	    {
-	       	    	printf("defeat\n");
+					gotoxy(0, 28);
+	       	    	printf("defeat，若想继续\n");
 	       	    	system("pause");
-					exit(0);
+					w = 1;
+					//exit(0);
 				}
 			
 		   }
 		   gotoxy(0,30);
-		   printf("score:%d",score);
+		   printf("score:%d",*score);
 
         }
-        return q;
+        return w;
 	
 }
 
-void show()  // 显示画面
+void show(int*bird_y, int*bird_x)  // 显示画面
 {
 	char input=1;
 		
 	Sleep(75);
-	gotoxy(bird_y,bird_x); 
+	gotoxy(*bird_y,*bird_x); 
 	printf(" ");
-	bird_x ++;
+	(*bird_x) ++;
 	if(_kbhit())
      input=_getch();
 	else input = 1;
     if (input == ' ')  
 	{
-	    bird_x = bird_x - 5;
-	    if(bird_x-1<=0)
-	       bird_x=bird_x+5;
+	    *bird_x = (*bird_x) - 5;
+	    if((*bird_x)-1<=0)
+	       *bird_x=(*bird_x)+5;
 	}
-    gotoxy(bird_y,bird_x);	
+    gotoxy(*bird_y,*bird_x);	
 	printf("@");
 }
 
 int main()
-{
+{ 
+	int bird_x, bird_y; // 小鸟的坐标
+	int bar1_y, bar1_xDown, bar1_xTop; // 障碍物
+	int score = 0;
 	int q=15,u,p=30,n;
 	srand(time(0));
 	SetColor();
-	u=startup();
+	u=startup(&bird_x, &bird_y, &bar1_y, &bar1_xDown, &bar1_xTop,&score);
 	n=rand()%10;
 	PlaySound(TEXT("A.wav"), NULL, SND_FILENAME | SND_ASYNC);
+	gotoxy(0, 29);
+	//printf("按下“R”重新开始");
 	while (1)  
 	{        
-		show();
-		barshow(q,u);
+		show(&bird_y, &bird_x);
+		if (barshow(q, u, &bird_x, &bird_y, &score))
+		{
+			u = startup(&bird_x, &bird_y, &bar1_y, &bar1_xDown, &bar1_xTop, &score);
+			system("cls");
+		}
+			
 		if(q==0)
 	    {
 	       q=30;
 	       u=rand()%10;
 		}
 		else q--;
-		barshow(p,n);
+		if (barshow(p, n, &bird_x, &bird_y, &score))
+		{
+			n= startup(&bird_x, &bird_y, &bar1_y, &bar1_xDown, &bar1_xTop, &score);
+			system("cls");
+		}
+		
 		if(p==0)
 	    {
 	       p=30;
